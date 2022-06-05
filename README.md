@@ -170,7 +170,7 @@ touch /var/www/feature_contact-form/handler.php
 ```php
 <?php 
 
-session_start(); 
+session_start();
 
 echo $_POST['data-username'];
 
@@ -181,4 +181,49 @@ L'incroyable résultat :
 
 ![L'incroyable résultat !](screenshots/result.png)
 
-- Vous n'êtes pas très impressionnés ? Normal, ce n'est que le début.
+- Vous n'êtes pas très impressionnés ? Normal, ce n'est que le début. Bon, en réalité on ne veut pas afficher pour de vrai des informations dans notre page de traitement. Comme nous l'avons vu précédemment, elle ne doit contenir **que du PHP**. Il n'y a donc pas de `DOCTYPE` dans cette page, etc. d'où l'intérêt de notre fonction `session_start()` que nous avons ouverte sur nos deux pages : nous allons demander à PHP d'afficher le résultat de notre traitement sur notre page `index.php`. Procédons par étape :
+    - Tout d'abord, remplacez le `echo` devant `$_POST['data-username'];` par `$_SESSION[] =` ; 
+    - Dans les crochets de `$_SESSION[]`, mettez des *simple quotes* et écrivez « *message* » dedans ;
+    - Entre le `=` et le `$_POST['data-username'];`, vous allez ouvrir des *simple quotes* pour spécifier que nous allons écrire une *string*, c'est à dire une chaine de caractères. Entre vos *simple quotes*, écrivez « Le nom d'utilisateur saisi est » : l'idée étant d'afficher un message en français confirmant le nom d'utilisateur saisi. Sauf que... ça ne fonctionnera pas en l'état...
+        - Dans la phrase « Le nom d'utilisateur saisi est », il y a une apostrophe après le  « d ». Or une apostrophe, c'est une *simple quote* ! Donc la *simple quote* s'ouvre avant le mot « le » mais se referme après le « d' ». Vous allez donc devoir « échapper » votre apostrophe en séparant le « d » et l'apostrophe par une anti-slash « \ ». Votre phrase devrait ressembler à ça : `'Le nom d\'utilisateur saisi est'` ;
+    - Ce n'est pas fini ! Entre votre *simple quote* fermante et `$_POST['data-username'];`, il va falloir concaténer. En PHP, l'opérateur de concaténation est le point. Vous devriez donc écrire quelque chose comme ça : `'Le nom d\'utilisateur saisi est ' . $_POST['data-username'];` ;
+        - Remarquez l'espace entre le mot « est » et la *simple quote*. Il n'est pas là par hasard ! Si vous ne mettez pas d'espace, la concaténation se fera entre la lettre « t » et la donnée saisie dans le formulaire, de qui ne sera pas très esthétique...
+    - Enfin, il vous reste à écrire sur la ligne suivante la fonction `header()` et à lui passer en paramètre `'Location : index.php'` ;
+    - Le résultat final devrait ressembler à ça : 
+
+**handler.php**
+```php
+<?php 
+
+session_start(); 
+
+$_SESSION['message'] = 'Le nom d\'utilisateur saisi est ' . $_POST['data-username'];
+
+header('Location: index.php');
+
+// EOF
+```
+
+> Notez que le code est plus court que les explications. 🤣
+
+
+
+**index.php**
+- Maintenant, affichons notre message dans `index.php`. Pour se faire, sous votre balise `</form>`, ouvrez une balise `<p>` et fermez-la avec `</p>`. À l'intérieur, tapez `<?=` : c'est un raccourci pour écrire `<?php echo`. Ensuite, `$_SESSION['message'];` puis fermez avec ` ?>`. Ça devrait ressembler à ça :
+
+index.php
+```php
+<p>
+    <?= $_SESSION['message']; ?>
+</p>
+```
+
+- Saisissez des données dans vos champs de formulaire, appuyez sur « Envoyer ». Les données sont envoyées à la page de traitement, mais vous ne vous en rendez pas compte ! Et la page `index.php` se recharge et affiche votre message :
+
+![message](screenshots/message.png)
+
+- Satisfaisant, non ? Sauf qu'on va avoir un petit problème supplémentaire. Si vous chargez votre page `index.php` alors qu'aucune donnée n'a encore été soumise via le formulaire, PHP va quand même essayer d'afficher `<?= $_SESSION['message']; ?>`. Vous aurez alors un magnifique message d'erreur de type :
+
+![error](screenshots/error.png)
+
+- La solution à ce problème, c'est un concept fondamental en programmation informatique : les conditions !
