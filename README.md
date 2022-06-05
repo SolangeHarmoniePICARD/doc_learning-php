@@ -2,7 +2,7 @@
 
 ## Avant d'écrire du PHP
 
-- Dans le répertoire `www` de votre environnement de développement (composé *a minima* d'une distribution **L**inux (en l'occurence Debian si vous avez suivi [mon tuto « Install LAMP in WSL2 »](https://github.com/SolangeHarmoniePICARD/doc_wsl2-debian)), d'**A**pache, **M**ariaDB & **P**HP), créez un dossier que vous nommerez `feature_contact-form` :
+- Dans le répertoire `www` de votre environnement de développement (composé *a minima* d'une distribution **L**inux - en l'occurence Debian si vous avez suivi [mon tuto « Install LAMP in WSL2 »](https://github.com/SolangeHarmoniePICARD/doc_wsl2-debian) -, d'**A**pache, de **M**ariaDB & de **P**HP), créez un dossier que vous nommerez `feature_contact-form` :
 
 ```
 mkdir /var/www/feature_contact-form
@@ -26,14 +26,13 @@ cd /var/www/feature_contact-form
 touch index.php
 ```
 
-## Les bases
+## Les bases : un formulaire en HTML
 
 - Ouvrez `index.php` avec VSCode. Il n'y aura presque pas de PHP dans ce fichier, puisqu'il contiendra notre formulaire, donc principalement du HTML. Toutefois, nous ferons passer des messages de succès ou d'erreurs depuis la page de traitement vers la page de formulaire via une variable superglobale : `$_SESSION`. Le fichier `index.php` doit donc commencer par la fonction PHP `session_start()`. Ouvrez la balise PHP : `<?php`, et fermez là sur la même ligne : `?>`. Entre ces deux balises, écrivez `session_start()` :
 
 **index.php**
 ```php
 <?php session_start(); ?>
-
 ```
 
 - Ensuite, ligne 3, générez le `DOCTYPE` en tapant `!` puis en appuyant sur la touche `TAB` de votre clavier dans VSCode+. Personnalisez-le, par exemple en changeant la langue : notre page sera en français, donc changez la valeur de l'attribut `lang="en"` par `lang="fr"`. Entre les balises ouvrantes et fermantes `<title>` et `</title>`, tapez un titre (en français) pour votre page web, par exemple `Formulaire de Contact`. Enfin, rajoutez la très importante balise `meta:desc`. Pour ce faire, sous la balise `meta:viewport`, tapez `meta:desc`, appuyez sur la touche `ENTRÉE` de votre clavier, et rédigez une description en français de votre page web comme valeur à l'attribut `content=""` :
@@ -121,7 +120,23 @@ touch /var/www/feature_contact-form/handler.php
 
 ![Contact form](screenshots/contact-form.png)
 
-## Un peu de pratique !
+- Et si vous saisissez une information dans votre champs de formulaire et que vous appuyez sur votre bouton « Envoyez », que se passe-t-il ? Testez !
+
+![nothing](screenshots/nothing.png)
+
+- En apparence, **il ne s'est rien passé**. Vous constatez juste que vous n'êtes plus sur votre page `index.php` et que vous êtes passé dans la page `handler.php`. **Mais c'est en apparence seulement !** Car en réalité... Faites un clic droit dans votre navigateur, et choisissez l'inspecteur dans le menu contextuel :
+
+![inspect](screenshots/inspect.png)
+
+- Dans l'onglet `Réseau`, cliquez sur `handler.php`. Pour que `handler.php` s'affiche, réactualisez la page ! Entre l'onglet `En-têtes` et l'onglet `Aperçu`, vous avez un onglet dont je ne me souviens plus du nom en français... En anglais c'est `Payload`. Cliquez sur cet onglet. Et là ! La valeur (`data-username`) de l'attribut `name` de votre `input` **et** la donnée saisie par l'utilisateur s'affichent ! Ce qui signifie qu'elle est disponible dans votre page `handler.php`. Reste à apprendre à la manipuler en PHP...
+
+![payload](screenshots/payload.png)
+
+
+
+
+
+### Un peu de pratique !
 
 > Dans un formulaire de contact, on a besoin de 4 informations :
 > - [X] le nom de la personne qui cherche à nous contacter
@@ -134,3 +149,36 @@ touch /var/www/feature_contact-form/handler.php
 ⚠️ Il y a quelques spécificités : 
 - les champs de formulaire pour les emails ne sont pas de type `text` !
 - les champs de formulaire pour les longs messages ne sont pas des balises `input` ! 
+
+
+## Les bases : la page de traitement en PHP
+
+- Dans notre fichier `handler.php`, commençons par ouvrir notre balise `<?php`. Une spécificité par rapport à ce que nous avons vu précédemment : nous ne la refermerons pas. En effet, cette page de traitement n'a vocation à ne contenir **que du PHP**, on ne ferme donc pas la balise. Pour des questions de symétrie du code (car oui, les développeurs sont des esthètes !), on peut indiquer le bas de page par un commentaire : `// EOF`, qui signifie « *End of file* » :
+
+**handler.php**
+```php
+<?php 
+
+/* Votre code ici */
+
+// EOF
+```
+
+- La première chose qu'on va faire, comme dans notre fichier `index.php`, c'est de démarrer la session avec la fonction `session_start()`, ainsi nous pourrons faire passer des informations de notre page de traitement à notre page de formulaire. Ensuite, nous allons afficher au moyen de la fonction `echo` la donnée soumise via le formumlaire (au moyen de l'`input` dont l'attribut `name` à la valeur `data-username`) qui est stockée dans la variable superglobale `$_POST['data-name']` :
+
+**handler.php**
+```php
+<?php 
+
+session_start(); 
+
+echo $_POST['data-username'];
+
+// EOF
+```
+
+L'incroyable résultat :
+
+![L'incroyable résultat !](screenshots/result.png)
+
+- Vous n'êtes pas très impressionnés ? Normal, ce n'est que le début.
