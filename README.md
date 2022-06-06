@@ -2,7 +2,7 @@
 
 ## Avant d'écrire du PHP
 
-- Dans le répertoire `www` de votre environnement de développement (composé *a minima* d'une distribution **L**inux - en l'occurence Debian si vous avez suivi [mon tuto « Install LAMP in WSL2 »](https://github.com/SolangeHarmoniePICARD/doc_wsl2-debian) -, d'**A**pache, de **M**ariaDB & de **P**HP), créez un dossier que vous nommerez `feature_contact-form` :
+- Dans le répertoire `www` de votre environnement de développement (composé *a minima* d'une distribution **L**inux - en l'occurence Debian si vous avez suivi [mon tuto « Install LAMP in WSL2 »](https://github.com/SolangeHarmoniePICARD/doc_wsl2-debian-fr) -, d'**A**pache, de **M**ariaDB & de **P**HP, **mais aussi de Postfix et de MailDev**), créez un dossier que vous nommerez `feature_contact-form` :
 
 ```
 mkdir /var/www/feature_contact-form
@@ -12,7 +12,7 @@ mkdir /var/www/feature_contact-form
 >
 > `/var` est le dossier système qui stocke des données variables.
 >
-> `/var/www` est le répertoire où Apache 2 va par défaut chercher les sites et les pages web.
+> `/var/www` est le répertoire où Apache2 va par défaut chercher les sites et les pages web.
 
 - Positionnez-vous à l'intérieur de ce dossier : 
 
