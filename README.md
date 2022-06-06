@@ -283,6 +283,7 @@ header('Location: index.php');
 > - [X] Ce qui est écrit entre *simple quotes* est de type *string* (chaîne de caractère)
 > - [X] une instruction se termine par `;`
 > - [X] `echo` permet d'afficher quelque chose
+>   - [X] `<?= ?>` est un raccourci que l'on utilise dans les fichiers HTML pour `<?php echo ?>` pour afficher quelque chose qui tient sur une seule ligne
 > - [X] `=` est un opérateur d'affection
 > - [X] `==` et `===` sont des opérateurs de comparaison
 > - [X] `if(){}` est la structure d'une condition
