@@ -116,7 +116,7 @@ touch /var/www/feature_contact-form/handler.php
 </html>
 ```
 
-- Dans votre navigateur, tapez `localhost/feature_contact-form` :
+- Dans la barre d'URL de votre navigateur, tapez `localhost/feature_contact-form` :
 
 ![Contact form](screenshots/contact-form.png)
 
@@ -182,8 +182,8 @@ L'incroyable résultat :
 ![L'incroyable résultat !](screenshots/result.png)
 
 - Vous n'êtes pas très impressionnés ? Normal, ce n'est que le début. Bon, en réalité on ne veut pas afficher pour de vrai des informations dans notre page de traitement. Comme nous l'avons vu précédemment, elle ne doit contenir **que du PHP**. Il n'y a donc pas de `DOCTYPE` dans cette page, etc. d'où l'intérêt de notre fonction `session_start()` que nous avons ouverte sur nos deux pages : nous allons demander à PHP d'afficher le résultat de notre traitement sur notre page `index.php`. Procédons par étape :
-    - Tout d'abord, remplacez le `echo` devant `$_POST['data-username'];` par `$_SESSION[] =` ; 
-    - Dans les crochets de `$_SESSION[]`, mettez des *simple quotes* et écrivez « *message* » dedans ;
+    - Tout d'abord, remplacez le `echo` devant `$_POST['data-username'];` par `$_SESSION[] =` : on affecte la valeur `$_POST['data-username'];` à la variable superglobale de session ; 
+        - Dans les crochets de `$_SESSION[]`, mettez des *simple quotes* (`'`) et écrivez « *message* » dedans pour donner une clé d'indexation. Le résultat : `$_SESSION['message'] = $_POST['data-username'];` ;
     - Entre le `=` et le `$_POST['data-username'];`, vous allez ouvrir des *simple quotes* pour spécifier que nous allons écrire une *string*, c'est à dire une chaine de caractères. Entre vos *simple quotes*, écrivez « Le nom d'utilisateur saisi est » : l'idée étant d'afficher un message en français confirmant le nom d'utilisateur saisi. Sauf que... ça ne fonctionnera pas en l'état...
         - Dans la phrase « Le nom d'utilisateur saisi est », il y a une apostrophe après le  « d ». Or une apostrophe, c'est une *simple quote* ! Donc la *simple quote* s'ouvre avant le mot « le » mais se referme après le « d' ». Vous allez donc devoir « échapper » votre apostrophe en séparant le « d » et l'apostrophe par une anti-slash « \ ». Votre phrase devrait ressembler à ça : `'Le nom d\'utilisateur saisi est'` ;
     - Ce n'est pas fini ! Entre votre *simple quote* fermante et `$_POST['data-username'];`, il va falloir concaténer. En PHP, l'opérateur de concaténation est le point. Vous devriez donc écrire quelque chose comme ça : `'Le nom d\'utilisateur saisi est ' . $_POST['data-username'];` ;
@@ -206,12 +206,9 @@ header('Location: index.php');
 
 > Notez que le code est plus court que les explications. 🤣
 
-
-
-**index.php**
 - Maintenant, affichons notre message dans `index.php`. Pour se faire, sous votre balise `</form>`, ouvrez une balise `<p>` et fermez-la avec `</p>`. À l'intérieur, tapez `<?=` : c'est un raccourci pour écrire `<?php echo`. Ensuite, `$_SESSION['message'];` puis fermez avec ` ?>`. Ça devrait ressembler à ça :
 
-index.php
+**index.php**
 ```php
 <p>
     <?= $_SESSION['message']; ?>
@@ -226,4 +223,69 @@ index.php
 
 ![error](screenshots/error.png)
 
-- La solution à ce problème, c'est un concept fondamental en programmation informatique : les conditions !
+- La solution à ce problème, c'est un concept fondamental en programmation informatique : les conditions ! On va donc écrire notre première condition. Supprimez la ligne `<?= $_SESSION['message']; ?>` entre vos balises `<p>` et `</p>`. À la place, ouvrez et fermez PHP : 
+
+**index.php**
+```php
+<p>
+    <?php
+        // Votre code ici
+    ?>
+</p>
+```
+
+- La structure d'une condition est assez simple, elle se compose du mot clé `if` suivi de parenthèses qui prennent en paramètres la vérification à effectuer, et d'accolades pour écrire des instructions. Si la condition passée en paramètre se vérifie, l'instruction s'exécute : 
+
+**index.php**
+```php
+<p>
+    <?php
+            if(/* la vérification */){
+                /* l'instruction */                
+            }
+    ?>
+</p>
+```
+
+- Dans notre cas, on va vérifier la présence d'un message stocké dans la variable superglobale `$_SESSION`. Si `$_SESSION['message']` est vraie, alors on affiche le message avec la fonction `echo`. Sinon, rien ne s'affiche. Pour tester une égalité, on utilise l'opérateur de comparaison `==` (compare les valeurs) ou `===` (comparaison plus stricte : valeur + type). 
+
+> ⚠️ Ne confondez jamais les **opérateurs de comparaison** `==` et `===`, et l'**opérateur d'affectation** `=`. En PHP, `=` ne signifie pas « égal » mais permet d'affecter une valeur à une variable. 
+
+**index.php**
+```php
+    if($_SESSION === true){
+        echo $_SESSION['message'] ;
+    } 
+```
+
+- En réalité, dans ce cas on peut simplifier en retirant `=== true` : passer `$_SESSION` en paramètre revient à vérifier si `$_SESSION` est vrai. Pour faire le choses proprement, on va mettre une seconde instruction après notre `echo` : on va nettoyer le contenu de `$_SESSION['message']` en lui ré-affectant une chaîne de caractère vide :
+
+**index.php**
+```php
+    if($_SESSION){
+        echo $_SESSION['message'] ;
+        $_SESSION['message'] = "";
+    }
+```
+
+- Testez dans le navigateur en vous connectant à  `localhost/feature_contact-form`. Si il n'y a pas de message d'erreur en dessous de votre formulaire, vous êtes pas mal. Entrez un nom dans votre champs de formulaire, appuyez sur votre bouton `Envoyez`, vous devriez avoir le même résultat que précédemment. Réactualisez la page : si tout s'est bien passé, le message disparaît. 
+
+> ## Ce que nous avons vu jusqu'à présent
+> - [X] On écrit du PHP dans un fichier portant l'extension `.php`
+> - [X] On peut écrire du HTML dans les fichiers PHP (en fait, PHP est un moteur de *template*, il génère du HTML pour le client)
+> - [X] On ouvre PHP avec la balise `<?php`
+> - [X] On ferme PHP avec la balise `?>`
+>   - [X] Il n'y a pas besoin de fermer PHP **si le fichier ne contient que du PHP** (on peut alors indiquer la fin du fichier par `// EOF`)
+> - [X] On envoie des données à une page de traitement en PHP via des formulaires HTML :
+>   - [X] la balise `<form>` doit contenir un attribut `action` qui prend pour valeur le chemin de la page de traitement, et un attribut `method` qui prend pour valeur `post`. Exemple : `<form action="handler.php" method="post"></form>`
+>   - [X] la page de traitement stocke les données envoyées via le formulaire dans la variable superglobale `$_POST`, qui est un `array` qui associe comme valeur la donnée envoyée à une clé qui correspond à l'attribut `name` du champs de formulaire. Par exemple, la donnée renseignée dans le champs de formulaire `<input type="text" name="data-username">` sera récuprée avec `$_POST['data-username']`
+> - [X] `$_POST` et `$_SESSION` sont des variables superglobales
+> - [X] Ce qui est écrit entre *simple quotes* est de type *string* (chaîne de caractère)
+> - [X] une instruction se termine par `;`
+> - [X] `echo` permet d'afficher quelque chose
+> - [X] `=` est un opérateur d'affection
+> - [X] `==` et `===` sont des opérateurs de comparaison
+> - [X] `if(){}` est la structure d'une condition
+> - [X] `session_start();` est une fonction qui permet de démarrer une session
+> - [X] Ce qui est écrit entre parenthèses est le paramètre d'une fonction
+> - [X] `header();` est une fonction qui prend en paramètre la *string* `'Location: chemin/de/la/page/de/destination.php'` et permet de faire automatiquement la redirection
