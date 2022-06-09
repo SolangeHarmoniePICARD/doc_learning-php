@@ -133,9 +133,6 @@ touch /var/www/feature_contact-form/handler.php
 ![payload](screenshots/payload.png)
 
 
-
-
-
 ### Un peu de pratique !
 
 > Dans un formulaire de contact, on a besoin de 4 informations :
@@ -149,6 +146,7 @@ touch /var/www/feature_contact-form/handler.php
 ⚠️ Il y a quelques spécificités : 
 - les champs de formulaire pour les emails ne sont pas de type `text` !
 - les champs de formulaire pour les longs messages ne sont pas des balises `input` ! 
+
 
 
 ## Les bases : la page de traitement en PHP
@@ -290,3 +288,157 @@ header('Location: index.php');
 > - [X] `session_start();` est une fonction qui permet de démarrer une session
 > - [X] Ce qui est écrit entre parenthèses est le paramètre d'une fonction
 > - [X] `header();` est une fonction qui prend en paramètre la *string* `'Location: chemin/de/la/page/de/destination.php'` et permet de faire automatiquement la redirection
+
+## L'envoi du mail en PHP
+
+- Si vous avec réussi le défi « Un peu de pratique » un peu plus haut dans ce tutoriel, vous devez avoir un fichier `index.php` qui ressemble à ça : 
+
+**index.php**
+
+```html
+<?php session_start(); ?>
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Un formulaire de contact en PHP/SQL.">
+    <title>Formulaire de Contact</title>
+</head>
+<body>
+    
+    <form action="handler.php" method="post">
+        <label for="field-name">Nom : </label>
+        <input type="text" name="data-username" id="field-name" placeholder="Votre nom">
+        <label for="input-email">Email</label>
+        <input type="text" name="data-email" id="input-email">
+        <label for="input-subject">Subject</label> 
+        <input type="text" name="data-subject" id="input-subject" />
+        <label for="input-message">Message</label> 
+        <textarea name="data-message" id="input- message"></textarea>
+        <input type="submit" value="Envoyez">
+    </form>
+
+    <p>
+        <?php
+            if($_SESSION){
+                echo $_SESSION['message'] ;
+                $_SESSION['message'] = "";
+            }
+        ?>
+    </p>
+
+</body>
+</html>
+```
+
+- Testez dans un navigateur : 
+
+![form](screenshots/form-full.png)
+
+- Pour la suite du tuto, assurez-vous que MailDev est lancé. Dans la barre URL de votre navigateur, tapez :
+
+```
+http://127.0.0.1:1080
+```
+
+- Vous devriez avoir ce résultat :
+
+![MailDev](screenshots/maildev.png)
+
+- Si ce n'est pas le cas, dans votre terminal Debian, tapez : 
+
+```
+maildev --ip 127.0.0.1
+```
+
+- Passons aux choses sérieuses. Dans votre fichier `handler.php`, juste après la fonction `session_start`, créez un `if`, et mettez le `$_SESSION` et la fonction `header` dans ce `if` :
+
+**handler.php**
+```php
+<?php 
+
+session_start(); 
+
+if(){
+
+    $_SESSION['message'] = 'Le nom d\'utilisateur saisi est ' . $_POST['data-username'];
+
+    header('Location: index.php');
+
+}
+
+// EOF
+```
+
+- Maintenant il faut écrire une condition en paramètre du `if`. Ce qu'on veut tester, c'est que les champs sont configurés et qu'ils sont « différents de vide » (je sais, en français ça fait nulle). Pour chaque champs, il va donc falloir utiliser les fonctions `isset()` et `!empty()` (`!` signifie « différent de », ou « le contraire de »). Passez les données de chaque champs en paramètre de ces deux fonctions. Au passage, changez le message. Ça devrait ressembler à ça :
+
+**handler.php**
+```php
+isset('data-username') && !empty('data-username') 
+&& isset('data-email') && !empty('data-email') 
+&& isset('data-subject') && !empty('data-subject')
+&& isset('data-message') && !empty('data-message')
+```
+
+- Du coup, il faut mettre ça en paramètre de votre `if()` : 
+
+**handler.php**
+```php
+<?php 
+
+session_start(); 
+
+if(isset($_POST['data-username']) && !empty($_POST['data-username']) 
+&& isset($_POST['data-email']) && !empty($_POST['data-email']) 
+&& isset($_POST['data-subject']) && !empty($_POST['data-subject'])
+&& isset($_POST['data-message']) && !empty($_POST['data-message'])){
+
+    $_SESSION['message'] = 'Ça marche !';
+
+    header('Location: index.php');
+
+}
+
+// EOF
+```
+
+- Et rajoutez un `else` : si l'une des conditions de votre `if()` n'est pas vérifié, le script ne pourra pas entrer dans les instructions de votre `if()` (les instructions, c'est tout ce qui est entre les accolades `{}` après les paramètres `()`), et exécutera les instructions du `else`. Écrivez quelque chose comme ça : 
+
+**handler.php**
+```php
+<?php 
+
+session_start(); 
+
+if(isset($_POST['data-username']) && !empty($_POST['data-username']) 
+&& isset($_POST['data-email']) && !empty($_POST['data-email']) 
+&& isset($_POST['data-subject']) && !empty($_POST['data-subject'])
+&& isset($_POST['data-message']) && !empty($_POST['data-message'])){
+
+echo 'ça marche' ;
+
+    $_SESSION['message'] = 'Ça marche !';
+
+    header('Location: index.php');
+
+} else {
+
+    $_SESSION['message'] = 'Remplissez tous les champs !';
+
+    header('Location: index.php');
+
+}
+
+// EOF
+```
+
+- Testez dans un navigateur, en remplissant tous les champs, vous devriez obtenir le message « `Ça marche !` » :
+
+![form success](screenshots/form.png)
+
+- Puis faites le même test en laissant un seul champs vide avant d'appuyez sur le bouton `Envoyez`, puis recommencez en laissant un autre champs vide, puis en laissant plusieurs champs vide, etc. À chaque fois, vous devriez obtenir « `Remplissez tous les champs !` ». Si c'est le cas, c'est que votre script fonctionne :
+
+![form error](screenshots/form-error.png)
