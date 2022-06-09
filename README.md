@@ -147,7 +147,13 @@ touch /var/www/feature_contact-form/handler.php
 - les champs de formulaire pour les emails ne sont pas de type `text` !
 - les champs de formulaire pour les longs messages ne sont pas des balises `input` ! 
 
-
+> ## Ce que nous avons vu jusqu'à présent
+> - [X] On écrit du PHP dans un fichier portant l'extension `.php`
+> - [X] On peut écrire du HTML dans les fichiers PHP (en fait, PHP est un moteur de *template*, il génère du HTML pour le client)
+> - [X] On ouvre PHP avec la balise `<?php`
+> - [X] On ferme PHP avec la balise `?>`
+> - [X] On envoie des données à une page de traitement en PHP via des formulaires HTML :
+>   - [X] la balise `<form>` doit contenir un attribut `action` qui prend pour valeur le chemin de la page de traitement, et un attribut `method` qui prend pour valeur `post`. Exemple : `<form action="handler.php" method="post"></form>`
 
 ## Les bases : la page de traitement en PHP
 
@@ -269,14 +275,8 @@ header('Location: index.php');
 - Testez dans le navigateur en vous connectant à  `localhost/feature_contact-form`. Si il n'y a pas de message d'erreur en dessous de votre formulaire, vous êtes pas mal. Entrez un nom dans votre champs de formulaire, appuyez sur votre bouton `Envoyez`, vous devriez avoir le même résultat que précédemment. Réactualisez la page : si tout s'est bien passé, le message disparaît. 
 
 > ## Ce que nous avons vu jusqu'à présent
-> - [X] On écrit du PHP dans un fichier portant l'extension `.php`
-> - [X] On peut écrire du HTML dans les fichiers PHP (en fait, PHP est un moteur de *template*, il génère du HTML pour le client)
-> - [X] On ouvre PHP avec la balise `<?php`
-> - [X] On ferme PHP avec la balise `?>`
->   - [X] Il n'y a pas besoin de fermer PHP **si le fichier ne contient que du PHP** (on peut alors indiquer la fin du fichier par `// EOF`)
-> - [X] On envoie des données à une page de traitement en PHP via des formulaires HTML :
->   - [X] la balise `<form>` doit contenir un attribut `action` qui prend pour valeur le chemin de la page de traitement, et un attribut `method` qui prend pour valeur `post`. Exemple : `<form action="handler.php" method="post"></form>`
->   - [X] la page de traitement stocke les données envoyées via le formulaire dans la variable superglobale `$_POST`, qui est un `array` qui associe comme valeur la donnée envoyée à une clé qui correspond à l'attribut `name` du champs de formulaire. Par exemple, la donnée renseignée dans le champs de formulaire `<input type="text" name="data-username">` sera récuprée avec `$_POST['data-username']`
+> - [X] Il n'y a pas besoin de fermer PHP **si le fichier ne contient que du PHP** (on peut alors indiquer la fin du fichier par `// EOF`)
+> - [X] la page de traitement stocke les données envoyées via le formulaire dans la variable superglobale `$_POST`, qui est un `array` qui associe comme valeur la donnée envoyée à une clé qui correspond à l'attribut `name` du champs de formulaire. Par exemple, la donnée renseignée dans le champs de formulaire `<input type="text" name="data-username">` sera récuprée avec `$_POST['data-username']`
 > - [X] `$_POST` et `$_SESSION` sont des variables superglobales
 > - [X] Ce qui est écrit entre *simple quotes* est de type *string* (chaîne de caractère)
 > - [X] une instruction se termine par `;`
