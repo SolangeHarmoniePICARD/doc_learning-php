@@ -418,8 +418,6 @@ if(isset($_POST['data-username']) && !empty($_POST['data-username'])
 && isset($_POST['data-subject']) && !empty($_POST['data-subject'])
 && isset($_POST['data-message']) && !empty($_POST['data-message'])){
 
-echo 'ça marche' ;
-
     $_SESSION['message'] = 'Ça marche !';
 
     header('Location: index.php');
@@ -442,3 +440,139 @@ echo 'ça marche' ;
 - Puis faites le même test en laissant un seul champs vide avant d'appuyez sur le bouton `Envoyez`, puis recommencez en laissant un autre champs vide, puis en laissant plusieurs champs vide, etc. À chaque fois, vous devriez obtenir « `Remplissez tous les champs !` ». Si c'est le cas, c'est que votre script fonctionne :
 
 ![form error](screenshots/form-error.png)
+
+- Ok, on va maintenant manipuler ces données en PHP. L'objectif, c'est d'envoyer un mail contenant les données. La première étape, c'est de stocker dans des variables les données passées par les champs de formulaire, récupérées via les `$_POST[]`. Entre la condition et la variable superglobale de session qui permet d'enregistrer le message de succès, déclarez des variables et affectez-leur les datas :
+
+**handler.php**
+```php
+<?php 
+
+session_start(); 
+
+if(isset($_POST['data-username']) && !empty($_POST['data-username']) 
+&& isset($_POST['data-email']) && !empty($_POST['data-email']) 
+&& isset($_POST['data-subject']) && !empty($_POST['data-subject'])
+&& isset($_POST['data-message']) && !empty($_POST['data-message'])){
+
+    $contact_username = strip_tags($_POST["data-username"]);
+	$contact_email = strip_tags($_POST["data-email"]);
+	$contact_subject = strip_tags($_POST["data-subject"]);
+	$contact_message = strip_tags($_POST["data-message"]);    
+
+    $_SESSION['message'] = 'Ça marche !';
+
+    header('Location: index.php');
+
+} else {
+
+    $_SESSION['message'] = 'Remplissez tous les champs !';
+
+    header('Location: index.php');
+
+}
+
+// EOF
+```
+
+- Du point de vue de l'utilisateur qui teste le champs de formulaire, rien n'a changé, par contre vous pouvez commenter temporairement le ` header('Location: index.php')` et faire des `echo` des variables pour constater que vous récupérez bien les données envoyées via le formulaire. Rajoutez après la déclaration des variables : 
+
+**handler.php**
+```php
+    echo 'Nom : ' . $contact_username . '<br> Email :' . $contact_email . '<br> Sujet :' . $contact_subject . '<br> Message :' . $contact_message ;    
+
+    // $_SESSION['message'] = 'Ça marche !';
+
+    // header('Location: index.php');
+```
+
+- Puis remplissez vos champs de formulaire, et appuyez sur `Envoyer`. Vous devriez obtenir un résultat comme celui-là :
+
+![Test variable](screenshots/test-variables.png)
+
+- Ça marche ! Bon, supprimez la ligne `echo` ou *a minima* commentez-là, elle ne servait qu'à vérifier qu'on récupérait bien les valeurs. On va déclarer deux autres variables. Une variable ` $mail_recipient` à laquelle on affecte comme valeur l'adresse email de celui qui doit recevoir les messages envoyés via le formulaire (en l'occurence vous), et les `headers` du mail, qui vous permettront à la réception du mail de savoir qui vous l'a envoyé :
+
+**handler.php**
+```php
+    $mail_recipient  = "s.picard@codeur.online";
+    $mail_headers = "From: " . $contact_username . "<". $contact_email .">\r\n";
+```
+
+- La fonction en PHP qui permet de gérer les mails s'appelle `mail()` (plutôt explicite, non ?). On va lui passer 4 paramètres, qui sont en fait les variables qu'on a déjà préparé :
+
+**handler.php**
+```php
+    mail($mail_recipient, $contact_subject, $contact_message, $mail_headers) ;
+```
+
+- On va l'encadrer d'une condition `if/else` : si tout se passe bien, on remplit la superglobale de session avec un message de succès, sinon avec un message d'erreur, et on termine par un `header('Location: ')` :
+
+**handler.php**
+```php
+    if(mail($mail_recipient, $contact_subject, $contact_message, $mail_headers)) {
+        $_SESSION['message'] = "Message envoyé !";
+    } else {
+        $_SESSION['message'] = "Le message n'a pas été envoyé...";
+    }
+
+    header('Location: index.php');
+```
+
+- Le code complet du fichier `handler.php` devrait maintenant ressembler à ça : 
+
+**handler.php**
+```php
+<?php 
+
+session_start(); 
+
+if(isset($_POST['data-username']) && !empty($_POST['data-username']) 
+&& isset($_POST['data-email']) && !empty($_POST['data-email']) 
+&& isset($_POST['data-subject']) && !empty($_POST['data-subject'])
+&& isset($_POST['data-message']) && !empty($_POST['data-message'])){
+
+    $contact_username = strip_tags($_POST["data-username"]);
+	$contact_email = strip_tags($_POST["data-email"]);
+	$contact_subject = strip_tags($_POST["data-subject"]);
+	$contact_message = strip_tags($_POST["data-message"]);
+
+    // echo 'Nom : ' . $contact_username . '<br> Email :' . $contact_email . '<br> Sujet :' . $contact_subject . '<br> Message :' . $contact_message ;   
+
+    $mail_recipient  = "s.picard@codeur.online";
+    $mail_headers = "From: " . $contact_username . "<". $contact_email .">\r\n";
+    
+    if(mail($mail_recipient, $contact_subject, $contact_message, $mail_headers)) {
+        $_SESSION['message'] = "Message envoyé !";
+    } else {
+        $_SESSION['message'] = "Le message n'a pas été envoyé...";
+    }
+
+    header('Location: index.php');
+
+} else {
+
+    $_SESSION['message'] = 'Remplissez tous les champs !';
+
+    header('Location: index.php');
+
+}
+
+// EOF
+```
+
+- Et pour voir le résultat, on va (enfin !) devoir utiliser MailDev, que vous avez normalement installé suite à votre installation de PHP en suivant [ce tuto](https://github.com/SolangeHarmoniePICARD/doc_wsl2-debian-fr). Normalement, MailDev se lance au moment où vous démarrez votre terminal Debian. Si pour une quelconque raison il n'est pas lancé, vous pouvez le relancer en tapant dans un terminal : 
+
+```
+maildev --ip 127.0.0.1
+```
+
+- Puis dans la barre d'URL de votre navigateur : 
+
+```
+http://127.0.0.1:1080
+```
+
+![MailDev](screenshots/maildev.png)
+
+- Testez votre formulaire de contact. La petite subtilité, c'est que MailDev intercepte le mail envoyé (pour éviter qu'une vraie boîte mail soit spamée durant une phase de test d'un formulaire de contact en PHP... malin non ?). Donc peu importe la valeur de votre variable `$mail_recipient`, tant que vous développez en local, rien n'arrivera dans votre boîte mail. Tout se passe à `http://127.0.0.1:1080` : 
+
+![MailDev](screenshots/result-maildev.png)
