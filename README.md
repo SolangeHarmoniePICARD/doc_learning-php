@@ -576,3 +576,115 @@ http://127.0.0.1:1080
 - Testez votre formulaire de contact. La petite subtilité, c'est que MailDev intercepte le mail envoyé (pour éviter qu'une vraie boîte mail soit spamée durant une phase de test d'un formulaire de contact en PHP... malin non ?). Donc peu importe la valeur de votre variable `$mail_recipient`, tant que vous développez en local, rien n'arrivera dans votre boîte mail. Tout se passe à `http://127.0.0.1:1080` : 
 
 ![MailDev](screenshots/result-maildev.png)
+
+
+## L'insertion en base de données 
+
+- Dans la barre d'URL de votre navigateur, tapez :
+
+```
+http://localhost/adminer/
+```
+
+![connexion adminer](screenshots/adminer.png)
+
+- Connectez-vous, puis créez une nouvelle base de données : 
+
+![connexion adminer](screenshots/adminer-interface.png)
+
+- Nommez-la `db_contact-form` et choisissez comme interclassement `utf8_general_ci` : 
+
+![nouvelle bdd dans adminer](screenshots/adminer_new-database.png)
+
+
+- Nous allons créer une nouvelle table pour stocker les messages envoyés via notre formulaire de contact :
+
+![nouvelle table dans la bdd](screenshots/adminer_create-table.png)
+
+- La table devra s'appeler `tbl_contacts`, elle aura pour moteur de stockage InnoDB, comme interclassement `utf8mb4_general_ci`, et elle sera composée de 5 champs :  `contact_id` (de type `int` et qui s'auto-incrémente), `contact_username`, `contact_email`, `contact_subject` et `contact_message`. Paramétrez comme suit, puis sauvegardez la nouvelle table : 
+
+![paramétrage de la nouvelle table dans la bdd](screenshots/adminer_set-table.png)
+
+- Dans un terminal, tapez :
+
+```
+touch /var/www/feature_contact-form/db_contact-form.sql
+```
+
+- Dans le fichier `db_contact-form.sql`, collez :
+
+```SQL
+SET NAMES utf8;
+SET time_zone = '+00:00';
+SET foreign_key_checks = 0;
+SET sql_mode = 'NO_AUTO_VALUE_ON_ZERO';
+
+DROP TABLE IF EXISTS `tbl_contacts`;
+CREATE TABLE `tbl_contacts` (
+  `contact_id` int(11) NOT NULL AUTO_INCREMENT,
+  `contact_username` varchar(255) NOT NULL,
+  `contact_email` varchar(255) NOT NULL,
+  `contact_subject` varchar(255) NOT NULL,
+  `contact_message` text NOT NULL,
+  PRIMARY KEY (`contact_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+```
+
+- Puis enregistrez. Si vous avez besoin de re-créer votre table, dans Adminer, placez-vous dans la base de données, cliquez sur `Commande SQL`, collez ces lignes et exécutez la requête : 
+
+![commande SQL](screenshots/adminer_execute-sql.png)
+
+⚠️ `DROP` signifie « supprimer » : si vous avez déjà des données sauvegardées dans votre base de données, vous les écraserez...
+
+- Dans un terminal, tapez :
+
+```
+touch /var/www/feature_contact-form/db-connect.php
+```
+
+- Dans `db-connect.php`, tapez (changez `your-username` et `your-password` avec vos informations de connexion : ce sont les mêmes que celles que vous utilisez pour vous connecter à Adminer) : 
+
+**db-connect.php**
+```php
+$db_servername = "localhost";
+$db_dbname = "db_contact-form";
+$db_username = "your-username";
+$db_password = "your-password";
+
+try {
+  $db = new PDO("mysql:host=$db_servername;dbname=$db_dbname", $db_username, $db_password);
+  // set the PDO error mode to exception
+  $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+  //echo "Connected successfully";
+} catch(PDOException $e) {
+  echo "Connection failed: " . $e->getMessage();
+}
+```
+
+- Dans `handler.php`, avant le  `header('Location: ')`, vous allez faire une requête préparée (vous écrivez votre requête SQL, puis `prepare`, `bindValue`, `execute`) : 
+
+**handler.php**
+```php
+require_once('db-connect.php');
+
+    $sql = 'INSERT INTO `tbl_contacts` (`contact_username`, `contact_email`, `contact_subject`, `contact_message`) VALUES (:contact_username, :contact_email, :contact_subject, :contact_message)';
+    $query = $db->prepare($sql);
+    $query->bindValue(':contact_username', $contact_username, PDO::PARAM_STR);
+    $query->bindValue(':contact_email', $contact_email, PDO::PARAM_STR);
+    $query->bindValue(':contact_subject', $contact_subject, PDO::PARAM_STR);
+    $query->bindValue(':contact_message', $contact_message, PDO::PARAM_STR);
+    $query->execute();
+```
+
+- Testez votre formulaire de contact, normalement dans MailDev vous recevez le mail, et dans Adminer, entrez dans `tbl_contacts` puis dans `Select data` :
+
+![Insertions de données dans la base de données](screenshots/adminer-insert-datas.png)
+
+
+## Défis : L'affichage des données contenues en base de données 
+
+> À partir de maintenant, débrouillez-vous : trouvez un moyen d'afficher dans une page PHP que vous nommerez `view.php` le contenu de votre base de données, c'est-à-dire le nom de l'auteur du message et son adresse email, le sujet et le corps du message. Petit indice, il faudra que PHP se connecte à la base de données pour récupérez des données, puis vous devrez utiliser une bocule `foreach` pour afficher dans des balises HTML chacune des entrées de votre base de données.
+>
+> Plus *hardcore*, modifiez la structure de votre base de données et votre requête pour enregistrer la date et l'heure à laquelle le message a été envoyé.
+>
+> Un peu de sécurité : vous voulez vraiment que n'importe puisse lire les messages qui vous sont envoyés depuis votre superbe formulaire de contact ?! Bien sûr que non ! Créez donc un formulaire de connexion à la page `view.php` ! Là ça devient compliqué : il vous faudra une nouvelle table pour inscrire des administrateurs ayant *a minima* un pseudo et un mot de passe, puis vérifiez que le mot de passe du formulaire corresponde au mot de passe en base de données. Je vous conseille de jetez un Œil sur les fonctions PHP ` password_hash()` et `password_verify()`. Bon si vous arrivez jusque là c'est que vous êtes pas mal en terme de niveau ! 😉
