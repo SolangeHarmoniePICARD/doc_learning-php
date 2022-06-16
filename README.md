@@ -683,8 +683,129 @@ require_once('db-connect.php');
 
 ## Défis : L'affichage des données contenues en base de données 
 
-> À partir de maintenant, débrouillez-vous : trouvez un moyen d'afficher dans une page PHP que vous nommerez `view.php` le contenu de votre base de données, c'est-à-dire le nom de l'auteur du message et son adresse email, le sujet et le corps du message. Petit indice, il faudra que PHP se connecte à la base de données pour récupérez des données, puis vous devrez utiliser une bocule `foreach` pour afficher dans des balises HTML chacune des entrées de votre base de données.
->
-> Plus *hardcore*, modifiez la structure de votre base de données et votre requête pour enregistrer la date et l'heure à laquelle le message a été envoyé.
+- Dans votre terminal Debian, tapez :
+
+```touch /var/www/feature_contact-form/view.php```
+
+- À la fin de `index.php`, placez un lien vers votre page `view.php` :
+
+**index.php**
+```html
+    <div>
+        <a href="view.php"><button>Afficher les messages</button></a>
+    </div>
+```
+
+- Dans `view.php`, commencez par ouvrir votre balise `<?php`, connectez-vous à la base de données en utilisant la fonction  `require_once()` et en lui passant en paramètre le fichier `'db-connect.php'`, puis faites une requête préparée pour récupérer toutes les données de la table `tbl_contacts` :
+
+**view.php**
+```php
+<?php
+
+    require_once('db-connect.php');
+
+    $sql = 'SELECT * FROM `tbl_contacts`';
+    $query = $db->prepare($sql);
+    $query->execute();
+    $contacts = $query->fetchAll(PDO::FETCH_ASSOC);
+
+?>
+```
+
+- Toutes vos données sont contenus dans un tableau associatif stocké dans la variable `$contacts`, on l'utilisera pour afficher les données dans une boucle. En attendant, après la balise fermante `?>`, allez à la ligne et générez un `!DOCTYPE`. Profitez-en pour mettre un lien qui permet de naviguer jusqu'à `index.php` :
+
+**view.php**
+```html
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="La page d'affiichage des messages du formulaire de contact en PHP/SQL.">
+    <title>Formulaire de Contact - Liste des messages</title>
+</head>
+<body>
+
+    <h1>Messages du formulaire de contact</h1>
+
+        <!-- Votre code PHP ici -->
+
+    <div>
+        <a href="index.php"><button>Retour</button></a>
+    </div>
+
+</body>
+</html>
+```
+
+- Dernière étape, mais non des moindre : on va ouvrir une boucle `foreach` qui pour chaque ligne de `tbl_contacts` stocké dans la variable `$contacts` (la clé), va remplir la variable `$contact` avec les données de la ligne. On fait apparaître ces données avec le raccourci PHP de `echo` qu'on a déjà vu, `<?= /* la variable ici */ ?>`, imbriqués dans des balises html, puis on ferme la boucle `foreach` :
+
+**view.php**
+```php
+    <?php foreach($contacts as $contact){ ?>
+        
+        <h2><?= $contact['contact_subject'] ?></h2>
+        <p>Auteur : <?= $contact['contact_username'] ?></p>
+        <p>Email : <?= $contact['contact_email'] ?></p>
+        <p>Message : <?= $contact['contact_message'] ?></p>
+
+    <?php } ?>
+```
+
+- Le code complet de la page `view.php` :
+
+**view.php**
+```html
+<?php
+
+require_once('db-connect.php');
+
+$sql = 'SELECT * FROM `tbl_contacts`';
+$query = $db->prepare($sql);
+$query->execute();
+$contacts = $query->fetchAll(PDO::FETCH_ASSOC);
+
+?>
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="La page d'affiichage des messages du formulaire de contact en PHP/SQL.">
+    <title>Formulaire de Contact - Liste des messages</title>
+</head>
+<body>
+    
+<h1>Messages du formulaire de contact</h1>
+
+    <?php foreach($contacts as $contact){ ?>
+        
+        <h2><?= $contact['contact_subject'] ?></h2>
+        <p>Auteur : <?= $contact['contact_username'] ?></p>
+        <p>Email : <?= $contact['contact_email'] ?></p>
+        <p>Message : <?= $contact['contact_message'] ?></p>
+
+    <?php } ?>
+
+    <div>
+        <a href="index.php"><button>Retour</button></a>
+    </div>
+
+</body>
+</html>
+
+```
+
+- Le résultat : 
+
+![Affichage des messages](screenshots/display-messages.png)
+
+
+> À partir de maintenant, débrouillez-vous :
 >
 > Un peu de sécurité : vous voulez vraiment que n'importe puisse lire les messages qui vous sont envoyés depuis votre superbe formulaire de contact ?! Bien sûr que non ! Créez donc un formulaire de connexion à la page `view.php` ! Là ça devient compliqué : il vous faudra une nouvelle table pour inscrire des administrateurs ayant *a minima* un pseudo et un mot de passe, puis vérifiez que le mot de passe du formulaire corresponde au mot de passe en base de données. Je vous conseille de jetez un Œil sur les fonctions PHP ` password_hash()` et `password_verify()`. Bon si vous arrivez jusque là c'est que vous êtes pas mal en terme de niveau ! 😉
+>
+> Plus *hardore* :  modifiez la structure de votre base de données pour enregistrer la date et l'heure à laquelle le message a été envoyé.
