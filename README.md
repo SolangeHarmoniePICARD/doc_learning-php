@@ -681,6 +681,10 @@ require_once('db-connect.php');
 ![Insertions de données dans la base de données](screenshots/adminer-insert-datas.png)
 
 
+
+> Défi :  modifiez la structure de votre base de données pour enregistrer la date et l'heure à laquelle le message a été envoyé.
+
+
 ## L'affichage des données contenues en base de données 
 
 - Dans votre terminal Debian, tapez :
@@ -803,7 +807,7 @@ $contacts = $query->fetchAll(PDO::FETCH_ASSOC);
 
 ![Affichage des messages](screenshots/display-messages.png)
 
-## Préparons la suite 
+## Un peu de cosmétique avant de passer à la suite 😄
 
 > On a actuellement 2 pages d'affichages contenant du HTML (`index.php` et `view.php`), et dans chacune de ces pages, on a un Doctype. C'est bien, mais on pourrait optimiser pour éviter au maximum de dupliquer du code. 
 
@@ -883,18 +887,16 @@ touch include_header.php include_footer.php
         <input type="submit" value="Envoyez">
     </form>
 
-    <div>
-        <a href="view.php"><button>Afficher les messages</button></a>
-    </div>
-
     <p>
+        <a href="view.php"><button>Afficher les messages</button></a>
+    </p>
 
 <?php include 'include_footer.php'; ?>
 ```
 
 > On est pas mal ! Mais on va rapidement avoir un autre petit problème : pour le moment on a un seul fichier de traitement qu'on a appelé `handler.php`, un seul fichier d'affichage qu'on a appelé `view.php`... mais nous allons vite en avoir d'autres ! « handler » et « view » vont donc devoir devenir des préfixes, un peu comme « include_ » !
 
-- Pour renommer un fichier, on utilise la commande `mv` dans un terminal. Normalement, vous êtes déjà dans `/var/www/feature_contact-form/`, sinon un petit `cd` pour vous repositionner dedans, puis : 
+- Pour renommer un fichier, on utilise la commande `mv` dans un terminal, suivi du nom du fichier à renomer, puis de son futur nom. Normalement, vous êtes déjà dans `/var/www/feature_contact-form/`, sinon un petit `cd` pour vous repositionner dedans, puis : 
 
 ```
 mv view.php view_contact-form-messages.php
@@ -908,7 +910,7 @@ mv view.php view_contact-form-messages.php
 mv handler.php handler_contact-form.php
 ```
 
-- Et puis pour des questions de cohénrence, on va aussi modifier `db-connect.php` et `db-env.php` : 
+- Et puis pour des questions de cohérence, on va aussi modifier `db-connect.php` et `db-env.php` : 
 
 ```
 mv db-connect.php db_connect.php
@@ -919,6 +921,8 @@ mv db-connect.php db_connect.php
 ```
 mv db-env.php db_env.php
 ```
+
+> ⚠️ Bon, il va falloir passer tous vos fichiers en revue et modifier tous les noms de fichier en dur dans le code. Bon courage. Si vous en ratez un, rien de bien grave, en testant votre projet PHP vous dira votre erreur et vous n'aurez qu'à modifier en conséquence... 😅 
 
 - Normalement, votre répertoire devrait ressembler à ceci : 
 
@@ -938,15 +942,106 @@ graph TD;
 	Views-->view_contact-form-messages.php
 ```
 
+> ⚠️ Sur le schéma, j'ai rajouté `Database`, `Includes`, `Handlers` et `Views` pour que vous compreniez bien, mais évidemment ça ne correspond pas à des dossiers, tous vos fichiers sont dans `/var/www/feature_contact-form/`.
+
 ## Le *Back-office*
 
 ### L'enregistrement d'un nouvel utilisateur
 
+> Un peu de sécurité : vous voulez vraiment que n'importe puisse lire les messages qui vous sont envoyés depuis votre superbe formulaire de contact ?! Bien sûr que non ! Créez donc un formulaire de connexion à la page `view.php` ! Là ça devient compliqué : il vous faudra une nouvelle table pour inscrire des administrateurs ayant *a minima* un pseudo et un mot de passe, puis vérifiez que le mot de passe du formulaire corresponde au mot de passe en base de données.
 
+- Commençons par créer une page d'affichage, qui va contenir notre formulaire d'inscription :
 
+```
+touch view_user-registration.php
+```
 
-> À partir de maintenant, débrouillez-vous :
->
-> Un peu de sécurité : vous voulez vraiment que n'importe puisse lire les messages qui vous sont envoyés depuis votre superbe formulaire de contact ?! Bien sûr que non ! Créez donc un formulaire de connexion à la page `view.php` ! Là ça devient compliqué : il vous faudra une nouvelle table pour inscrire des administrateurs ayant *a minima* un pseudo et un mot de passe, puis vérifiez que le mot de passe du formulaire corresponde au mot de passe en base de données. Je vous conseille de jetez un Œil sur les fonctions PHP ` password_hash()` et `password_verify()`. Bon si vous arrivez jusque là c'est que vous êtes pas mal en terme de niveau ! 😉
->
-> Plus *hardore* :  modifiez la structure de votre base de données pour enregistrer la date et l'heure à laquelle le message a été envoyé.
+- Et sa page de traitement : 
+
+```
+touch handler_user-registration.php
+```
+
+- Dans la *view*, on peut commencer par mettre nos *includes* : 
+
+**view_user-registration.php**
+```html
+<?php include 'include_header.php'; ?>
+
+<!-- Notre formulaire d'inscription ici... -->
+
+<?php include 'include_footer.php'; ?>
+```
+
+- Et dans `index.php`, on va remplacer le lien vers la page d'affichage des messages par un lien vers la page d'inscription : 
+
+**index.php**
+
+```html
+    <p>
+        <a href="view_user-registration.php">
+            <button>S'inscrire</button>
+        </a>
+    </p>
+```
+
+- Dans *view_user-registration.php*, on crée notre formulaire d'inscription. On va découvrir un nouveau type de champs de formulaire, le type `password` qui a notamment la particularité de masquer ce qu'on écrit : 
+
+**view_user-registration.php**
+
+```html
+<?php include 'include_header.php'; ?>
+
+    <form action="handler_user-registration.php" method="post">
+
+        <div>
+            <label for="input-username">Nom d'utilisateur:</label>
+            <input type="text" id="input-username" name="data-username">
+        </div>
+
+        <div>
+            <label for="input-email">Email:</label>
+            <input type="email" id="input-email" name="data-email">
+        </div>
+
+        <div>
+            <label for="input-password">Mot de passe:</label>
+            <input type="password" id="input-password" name="data-password">
+        </div>
+
+        <div>
+            <label for="input-pswdConfirmation">Confirmez le mot de passe :</label>
+            <input type="password"  id="input-pswdConfirmation" name="data-pswdConfirmation">
+        </div>
+
+        <div>
+            <input type="submit" id="form_submit" value="S'inscrire">
+        </div>
+
+    </form>
+
+<?php include 'include_footer.php'; ?>
+```
+
+- Dans *handler_user-registration.php*, on commence par vérifier que les champs de formulaire ont bien été soumis et qu'ils ne sont pas vides : 
+
+**handler.php**
+```php
+<?php
+
+session_start();
+
+  if(isset($_POST['data-username']) && !empty($_POST['data-username']) 
+    && isset($_POST['data-email']) && !empty($_POST['data-email']) 
+    && isset($_POST['data-password']) && !empty($_POST['data-password']) 
+    && isset($_POST['data-pswdConfirmation']) && !empty($_POST['data-pswdConfirmation'])){
+
+        echo 'Ça marche ! 🥳';
+
+    } else {
+        $_SESSION['message'] = 'Completez tous les champs !';
+        header('Location: view_user-registration.php'); 
+    }
+
+?>
+```
