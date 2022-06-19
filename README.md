@@ -1023,9 +1023,31 @@ touch handler_user-registration.php
 <?php include 'include_footer.php'; ?>
 ```
 
+- C'est bien d'avoir un formulaire pour récupérer des données, mais il nous faut une table dans laquelle les écrire. Allez dans Adminer en tapant `http://localhost/adminer/` dans la barre d'URL de votre navigateur, entrez dans la base de données `db_contact-form`, cliquez sur `Requête SQL` et tapez : 
+
+```sql
+SET NAMES utf8;
+SET time_zone = '+00:00';
+SET foreign_key_checks = 0;
+SET sql_mode = 'NO_AUTO_VALUE_ON_ZERO';
+
+DROP TABLE IF EXISTS `tbl_users`;
+CREATE TABLE `tbl_users` (
+  `user_id` int(11) NOT NULL AUTO_INCREMENT,
+  `user_username` varchar(255) NOT NULL,
+  `user_password` varchar(255) NOT NULL,
+  `user_email` varchar(255) NOT NULL,
+  PRIMARY KEY (`user_id`),
+  UNIQUE KEY `user_email` (`user_email`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+```
+
+- Exécutez la requête. Vous pouvez vous repositionner dans `db_contact-form`. Exportez la totalité de votre base, et copiez le résultat à la place du contenu dans `db_contact-form.sql`.
+
 - Dans *handler_user-registration.php*, on commence par vérifier que les champs de formulaire ont bien été soumis et qu'ils ne sont pas vides : 
 
-**handler.php**
+**handler_user-registration.php**
 ```php
 <?php
 
@@ -1045,3 +1067,125 @@ session_start();
 
 ?>
 ```
+
+- Dans ce premier `if`, on imbrique ensuite un second `if` pour vérifier que le mot de passe et la confirmation du mot de passe correspondent :
+
+**handler_user-registration.php**
+```php
+    if ($_POST['data-password'] == $_POST['data-pswdConfirmation']) {
+            
+        echo 'Ça marche ! 🥳';
+
+    } else {
+
+        $_SESSION['message'] = 'Les mots de passe ne correspondent pas...';
+        header('Location: view_user-registration.php'); 
+
+    }
+```
+
+- Dans ce second `if`, on stocke les données dans des variables, et on en profite au passage pour nettoyer les données avec la fonction `strip_tags()`. Pour le mot de passe, ça va se faire en 2 temps, puisqu'il faut aussi le crypter avec la fonction `password_hash()` :
+
+**handler_user-registration.php**
+```php
+    $user_username = strip_tags($_POST['data_username']);
+    $user_email = strip_tags($_POST['data_email']);
+    $user_unencrypted_password = strip_tags($_POST['data_password']);
+    $user_encrypted_password = password_hash($user_unencrypted_password, PASSWORD_DEFAULT);
+```
+
+- Il ne nous reste plus qu'à nous connecter à la base de données, à préparer, faire le bind et exécuter la requête d'insertion :
+
+**handler_user-registration.php**
+```php
+    require_once('db_connect.php');
+    $sql = 'INSERT INTO tbl_users(`user_username`, `user_password`, `user_email`) VALUES(:user_username, :user_password, :user_email)';
+    $query = $db->prepare($sql);
+    $query->bindValue(':user_username', $user_username, PDO::PARAM_STR);
+    $query->bindValue(':user_password', $user_encrypted_password, PDO::PARAM_STR);
+    $query->bindValue(':user_email', $user_email, PDO::PARAM_STR);
+    $query->execute();
+```
+
+- Terminez par un `header(Location : index.php)` pour rediriger sur l'accueil et non sur le formulaire, et rédigez un message dans la variable superglobale de session :
+
+**handler_user-registration.php**
+```php
+    $_SESSION['message'] = 'Nouvel utilisateur enregistré !';
+    header('Location: index.php'); 
+```
+
+- Testez votre formulaire d'inscription. Vérifiez dans Adminer, dans `tbl_users`, cliquez sur `Afficher les données`, normalement une nouvelle ligne avec le nouvel utilisateur est apparu. Reste à faire le formulaire de connexion ! En attendant, le code complet de la page `handler_user-registration.php` :
+
+**handler_user-registration.php**
+```php
+<?php
+
+session_start();
+
+  if(isset($_POST['data-username']) && !empty($_POST['data-username']) 
+    && isset($_POST['data-email']) && !empty($_POST['data-email']) 
+    && isset($_POST['data-password']) && !empty($_POST['data-password']) 
+    && isset($_POST['data-pswdConfirmation']) && !empty($_POST['data-pswdConfirmation'])){
+
+        if ($_POST['data-password'] == $_POST['data-pswdConfirmation']) {
+
+            $user_username = strip_tags($_POST['data-username']);
+            $user_email = strip_tags($_POST['data-email']);
+            $user_unencrypted_password = strip_tags($_POST['data-password']);
+            $user_encrypted_password = password_hash($user_unencrypted_password, PASSWORD_DEFAULT);
+
+            require_once('db_connect.php');
+            $sql = 'INSERT INTO tbl_users(`user_username`, `user_password`, `user_email`) VALUES(:user_username, :user_password, :user_email)';
+            $query = $db->prepare($sql);
+            $query->bindValue(':user_username', $user_username, PDO::PARAM_STR);
+            $query->bindValue(':user_password', $user_encrypted_password, PDO::PARAM_STR);
+            $query->bindValue(':user_email', $user_email, PDO::PARAM_STR);
+            $query->execute();
+
+            $_SESSION['message'] = 'Nouvel utilisateur enregistré !';
+            header('Location: index.php'); 
+
+        } else {
+            $_SESSION['message'] = 'Les mots de passe ne correspondent pas...';
+            header('Location: view_user-registration.php'); 
+        }
+
+    } else {
+        $_SESSION['message'] = 'Completez tous les champs !';
+        header('Location: view_user-registration.php'); 
+    }
+
+?>
+```
+
+- Et en bonus, le fichier `db_contact-form.sql` : 
+
+**db_contact-form.sql**
+```sql
+SET NAMES utf8;
+SET time_zone = '+00:00';
+SET foreign_key_checks = 0;
+SET sql_mode = 'NO_AUTO_VALUE_ON_ZERO';
+
+DROP TABLE IF EXISTS `tbl_contacts`;
+CREATE TABLE `tbl_contacts` (
+  `contact_id` int(11) NOT NULL AUTO_INCREMENT,
+  `contact_username` varchar(255) NOT NULL,
+  `contact_email` varchar(255) NOT NULL,
+  `contact_subject` varchar(255) NOT NULL,
+  `contact_message` text NOT NULL,
+  PRIMARY KEY (`contact_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+DROP TABLE IF EXISTS `tbl_users`;
+CREATE TABLE `tbl_users` (
+  `user_id` int(11) NOT NULL AUTO_INCREMENT,
+  `user_username` varchar(255) NOT NULL,
+  `user_password` varchar(255) NOT NULL,
+  `user_email` varchar(255) NOT NULL,
+  PRIMARY KEY (`user_id`),
+  UNIQUE KEY `user_email` (`user_email`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+```
+
