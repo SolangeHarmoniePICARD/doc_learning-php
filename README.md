@@ -681,7 +681,7 @@ require_once('db-connect.php');
 ![Insertions de données dans la base de données](screenshots/adminer-insert-datas.png)
 
 
-## Défis : L'affichage des données contenues en base de données 
+## L'affichage des données contenues en base de données 
 
 - Dans votre terminal Debian, tapez :
 
@@ -802,6 +802,147 @@ $contacts = $query->fetchAll(PDO::FETCH_ASSOC);
 - Le résultat : 
 
 ![Affichage des messages](screenshots/display-messages.png)
+
+## Préparons la suite 
+
+> On a actuellement 2 pages d'affichages contenant du HTML (`index.php` et `view.php`), et dans chacune de ces pages, on a un Doctype. C'est bien, mais on pourrait optimiser pour éviter au maximum de dupliquer du code. 
+
+- Positionnons-nous dans `/var/www/feature_contact-form/` :
+
+```
+cd /var/www/feature_contact-form/
+```
+
+- On va commencer par créer 2 nouveaux fichiers : 
+
+```
+touch include_header.php include_footer.php
+```
+
+- Dans `include_header.php`, on va mettre tout ce qui précède l'ouverture de la balide `<body>` dans nos pages d'affichage, et la balise ouvrante `<body>` elle-même :
+
+**include_header.php**
+```html
+<?php session_start(); ?>
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Un formulaire de contact en PHP/SQL.">
+    <title>Formulaire de Contact</title>
+</head>
+<body>
+```
+
+- Réciproquement, dans `include_footer.php`, on met tout ce qui termine notre fichier, bien entendu les balises fermantes `</body>` et `</html>` mais aussi pourquoi pas notre variable superglobale de session qui gère les messages si il y en a :
+
+**include_footer.php**
+```html
+    <p>
+        <?php
+            if($_SESSION){
+                echo $_SESSION['message'] ;
+                $_SESSION['message'] = "";
+            }
+        ?>
+    </p>
+
+</body>
+</html>
+```
+
+- Il ne nous reste plus qu'à retirer dans `index.php` et dans `view.php` ce qu'on a mis dans nos includes, et à les appeler à la place :
+
+```
+<?php include 'include_header.php'; ?>
+```
+
+- et par :
+
+```
+<?php include 'include_footer.php'; ?>
+```
+
+- Du coup, votre fichier `index.php` devrait ressembler à ça : 
+
+```html
+<?php include 'include_header.php'; ?>
+    
+    <form action="handler.php" method="post">
+        <label for="field-username">Nom : </label>
+        <input type="text" name="data-username" id="field-username" placeholder="Votre nom">
+        <label for="input-email">Email</label>
+        <input type="text" name="data-email" id="input-email" placeholder="Votre e-mail">
+        <label for="input-subject">Sujet</label> 
+        <input type="text" name="data-subject" id="input-subject">
+        <label for="input-message">Message</label> 
+        <textarea name="data-message" id="input-message"></textarea>
+        <input type="submit" value="Envoyez">
+    </form>
+
+    <div>
+        <a href="view.php"><button>Afficher les messages</button></a>
+    </div>
+
+    <p>
+
+<?php include 'include_footer.php'; ?>
+```
+
+> On est pas mal ! Mais on va rapidement avoir un autre petit problème : pour le moment on a un seul fichier de traitement qu'on a appelé `handler.php`, un seul fichier d'affichage qu'on a appelé `view.php`... mais nous allons vite en avoir d'autres ! « handler » et « view » vont donc devoir devenir des préfixes, un peu comme « include_ » !
+
+- Pour renommer un fichier, on utilise la commande `mv` dans un terminal. Normalement, vous êtes déjà dans `/var/www/feature_contact-form/`, sinon un petit `cd` pour vous repositionner dedans, puis : 
+
+```
+mv view.php view_contact-form-messages.php
+```
+
+> Ça vous semble être un nom de fichier à rallonge ? C'est le cas. Mais il a l'avantage d'être explicite. Pour débuter, c'est la bonne façon de faire ! 
+
+- Modifiez aussi le nom de la page de traitement : 
+
+```
+mv handler.php handler_contact-form.php
+```
+
+- Et puis pour des questions de cohénrence, on va aussi modifier `db-connect.php` et `db-env.php` : 
+
+```
+mv db-connect.php db_connect.php
+```
+
+- Et : 
+
+```
+mv db-env.php db_env.php
+```
+
+- Normalement, votre répertoire devrait ressembler à ceci : 
+
+```mermaid
+graph TD;
+/var/www/feature_contact-form/-->index.php
+/var/www/feature_contact-form/-->Database
+	Database-->db_contact-form.sql
+	Database-->db_connect.php
+	Database-->db_env.php
+/var/www/feature_contact-form/-->Includes
+	Includes-->include_header.php
+	Includes-->include_footer.php
+/var/www/feature_contact-form/-->Handlers
+	Handlers-->handler_contact-form.php
+/var/www/feature_contact-form/-->Views
+	Views-->view_contact-form-messages.php
+```
+
+## Le *Back-office*
+
+### L'enregistrement d'un nouvel utilisateur
+
+
 
 
 > À partir de maintenant, débrouillez-vous :
