@@ -1298,7 +1298,7 @@ if(isset($_POST['data-username']) && !empty($_POST['data-username'])
 
 ```
 
-- Le code compler de `handler_user-login.php` :
+- Le code complet de `handler_user-login.php` :
 
 **handler_user-login.php**
 ```php
@@ -1343,6 +1343,8 @@ if(isset($_POST['data-username']) && !empty($_POST['data-username'])
 ```
 
 > **Défi :** Ça marche, mais le problème, c'est que si quelqu'un connaît l'url `http://localhost/feature_contact-form/view_contact-form-messages.php`, il accède directement aux messages sans avoir besoin de passer par le formulaire de connexion... Trouvez une solution !
+>
 > **Autre défi :** Qu'il y ait un formulaire d'inscription pour un premier utilisateur, c'est bien. Mais dans la logique, si un utilisateur est déjà enregistré, ce devrait être à lui seul que revient le pouvoir d'inscrire d'autres utilisateurs : le bouton d'inscription ne devrait donc plus apparaître...
+>
 > **Ultime défi :** concevez des interfaces esthétiques ! (ce qui revient à dire, habillez votre squelette avec du css !)
 
