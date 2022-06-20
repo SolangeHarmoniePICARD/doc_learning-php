@@ -1189,3 +1189,160 @@ CREATE TABLE `tbl_users` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 ```
 
+### Le formulaire de connexion
+
+- Comme pour le formulaire d'inscription, nous pouvons commencer par créer une page d'affichage, qui va contenir notre formulaire de connexion :
+
+```
+touch view_user-login.php
+```
+
+- Et sa page de traitement : 
+
+```
+touch handler_user-login.php
+```
+
+- Dans `index.php`, on rajoute le lien vers le formulaire de connexion, à côté deu bouton d'inscription :
+
+**index.php**
+```html
+<a href="view_user-login.php"><button>Se connecter</button></a>
+```
+
+- Dans `view_user-login.php`, on met nos *includes*, on crée un formulaire avec la méthode `post` et `handler_user-login.php` comme action, et un bouton retour :
+
+**view_user-login.php**
+```html
+<?php include 'include_header.php'; ?>
+
+    <form action="handler_user-login.php" method="post">
+        <!-- Le code de votre formulaire ici -->
+    </form>
+    
+    <p>
+        <a href="index.php">
+            <button>Retour</button>
+        </a>
+    </p>
+
+<?php include 'include_footer.php'; ?>
+```
+
+- Puis nos 3 `input` à l'intérieur de la balise `form`, comme on sait déjà le faire :
+
+**view_user-login.php**
+```html
+    <div>
+        <label for="input-username">Username: </label>
+        <input type="text" id="input-username" name="data-username">
+    </div>
+    <div>
+        <label for="input-password">Password: </label>
+        <input type="password" id="input-password" name="data-password">
+    </div>
+    <div>
+        <input type="submit" value="Se connecter">
+    </div>
+```
+
+- Et c'est tout pour la page de formulaire ! Passons à la page de traitement, avec l'ouverture de la balise PHP, le démarrage de la session, le `if` et le `else`, la connexion à la base de données, la requête `SELECT`, le *prepare/execute*, les redirections, la superglobale de session contenant les messages, etc. :
+
+**handler_user-login.php**
+```php
+<?php 
+
+session_start();
+
+if(isset($_POST['data-username']) && !empty($_POST['data-username']) 
+&& isset($_POST['data-password']) && !empty($_POST['data-password'])){
+
+    require_once('db_connect.php');
+
+    $sql = 'SELECT user_id, user_username, user_password FROM tbl_users WHERE user_username = :user_username';
+    $query = $db->prepare($sql);
+    $query->execute(array('user_username' => $_POST['data-username']));
+    $result = $query->fetch();
+
+        /* Votre code ici */
+
+} else {
+
+    $_SESSION['message'] = 'Complétez tous les champs.';
+    header('Location: form_user-login.php'); 
+
+}
+
+```
+
+- À partir de maintenant, les choses vont être un peu différente de ce qu'on a vu précédemment. On doit comparer si le mot de passe saisi correspond au mot de passe enregistré en base de données. On utilise pour cela la fonction `password_verify()`, qui prend 2 paramèrtres : le mot de passe saisi, qu'on récupère avec la superglobale `$_POST`, et le mot de passe enregistré en base de données, qu'on a stocké dans la variable `$result` au moment du `fetch()`. On stocke le résultat de la fonction `password_verify()` dans une variable, et on vérifie si c'est variable est vraie. Si le mot de passe saisi n'est pas différent du mot de passe contenu en base de données pour l'utilisateur, on envoie un message de succès via la superglobale de session, puis on fait la redirection vers notre page d'affichage des messages. Sinon, on indique qu'il y a un problème : 
+
+**handler_user-login.php**
+```php
+    $checking_password = password_verify($_POST['data-password'], $result['user_password']);
+
+        if ($checking_password) {
+
+            $_SESSION['id'] = $result['user_id'];
+            $_SESSION['username'] = $result['user_username'];
+            $_SESSION['message'] = 'Connexion réussie !';
+            header('Location: view_contact-form-messages.php');
+
+        }else{
+
+
+            $_SESSION['message'] = 'Le nom d\'utilisateur ou le mot de passe sont incorrects.';
+            header('Location: view_user-login.php');
+
+        } 
+
+```
+
+- Le code compler de `handler_user-login.php` :
+
+**handler_user-login.php**
+```php
+<?php 
+
+session_start();
+
+if(isset($_POST['data-username']) && !empty($_POST['data-username']) 
+&& isset($_POST['data-password']) && !empty($_POST['data-password'])){
+
+    require_once('db_connect.php');
+
+    $sql = 'SELECT user_id, user_username, user_password FROM tbl_users WHERE user_username = :user_username';
+    $query = $db->prepare($sql);
+    $query->execute(array('user_username' => $_POST['data-username']));
+    $result = $query->fetch();
+
+
+        $checking_password = password_verify($_POST['data-password'], $result['user_password']);
+
+        if ($checking_password) {
+
+            $_SESSION['id'] = $result['user_id'];
+            $_SESSION['username'] = $result['user_username'];
+            $_SESSION['message'] = 'Connexion réussie !';
+            header('Location: view_contact-form-messages.php');
+
+        }else{
+
+
+            $_SESSION['message'] = 'Le nom d\'utilisateur ou le mot de passe sont incorrects.';
+            header('Location: view_user-login.php');
+
+        } 
+
+} else {
+
+    $_SESSION['message'] = 'Complétez tous les champs.';
+    header('Location: view_user-login.php'); 
+
+}
+```
+
+> **Défi :** Ça marche, mais le problème, c'est que si quelqu'un connaît l'url `http://localhost/feature_contact-form/view_contact-form-messages.php`, il accède directement aux messages sans avoir besoin de passer par le formulaire de connexion... Trouvez une solution !
+> **Autre défi :** Qu'il y ait un formulaire d'inscription pour un premier utilisateur, c'est bien. Mais dans la logique, si un utilisateur est déjà enregistré, ce devrait être à lui seul que revient le pouvoir d'inscrire d'autres utilisateurs : le bouton d'inscription ne devrait donc plus apparaître...
+> **Ultime défi :** concevez des interfaces esthétiques ! (ce qui revient à dire, habillez votre squelette avec du css !)
+
