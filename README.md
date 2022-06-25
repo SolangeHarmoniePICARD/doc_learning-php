@@ -948,7 +948,7 @@ graph TD;
 
 ### L'enregistrement d'un nouvel utilisateur
 
-> Un peu de sécurité : vous voulez vraiment que n'importe puisse lire les messages qui vous sont envoyés depuis votre superbe formulaire de contact ?! Bien sûr que non ! Créez donc un formulaire de connexion à la page `view.php` ! Là ça devient compliqué : il vous faudra une nouvelle table pour inscrire des administrateurs ayant *a minima* un pseudo et un mot de passe, puis vérifiez que le mot de passe du formulaire corresponde au mot de passe en base de données.
+> Un peu de sécurité : vous voulez vraiment que n'importe qui puisse lire les messages qui vous sont envoyés depuis votre superbe formulaire de contact ?! Bien sûr que non ! Créez donc un formulaire de connexion à la page `view.php` ! Là ça devient compliqué : il vous faudra une nouvelle table pour inscrire des administrateurs ayant *a minima* un pseudo et un mot de passe, puis vérifiez que le mot de passe du formulaire corresponde au mot de passe en base de données.
 
 - Commençons par créer une page d'affichage, qui va contenir notre formulaire d'inscription :
 
