@@ -1342,8 +1342,77 @@ if(isset($_POST['data-username']) && !empty($_POST['data-username'])
 }
 ```
 
-> **Défi :** Ça marche, mais le problème, c'est que si quelqu'un connaît l'url `http://localhost/feature_contact-form/view_contact-form-messages.php`, il accède directement aux messages sans avoir besoin de passer par le formulaire de connexion... Trouvez une solution !
->
+### La condition pour bloquer l'accès aux messages si l'on n'est pas connecté
+
+> Ça marche, mais le problème, c'est que si quelqu'un connaît l'url `http://localhost/feature_contact-form/view_contact-form-messages.php`, il accède directement aux messages sans avoir besoin de passer par le formulaire de connexion... Trouvez une solution !
+
+- L'idée, c'est de tester dans `view_contact-form-messages.php` si la variable superglobale de session contient l'index `username`. Pour rappel, dans le fichier `handler_user-login.php`, si le mot de passe saisi par l'utilisateur correspond au mot de passe enregistré en base de données, on remplissait `$_SESSION['username']` avec le `username` contenu en base de données. Donc si la connexion est réussie, la variable superglobale de session contient bien l'index `username`, sinon, on fait un `header('Location: ')` vers la page de connexion, complété d'un message d'erreur. On place tout ça après l'` include 'include_header.php'` et avant la connexion à la base de données :
+
+```php
+if($_SESSION['username']){
+
+    echo 'User: ' . $_SESSION['username'] ;
+
+} else {
+
+    $_SESSION['message'] = 'Vous n\'êtes pas connecté !';
+    header('Location: view_user-login.php'); 
+
+}
+```
+
+- Le fichier `view_contact-form-messages.php` complet : 
+
+**view_contact-form-messages.php**
+```php
+<?php include 'include_header.php'; ?>
+
+<?php
+
+if($_SESSION['username']){
+
+    echo 'User: ' . $_SESSION['username'] ;
+
+} else {
+
+    $_SESSION['message'] = 'Vous n\'êtes pas connecté !';
+    header('Location: view_user-login.php'); 
+
+}
+
+require_once('db_connect.php');
+
+$sql = 'SELECT * FROM `tbl_contacts`';
+$query = $db->prepare($sql);
+$query->execute();
+$contacts = $query->fetchAll(PDO::FETCH_ASSOC);
+
+?>
+    
+<h1>Messages du formulaire de contact</h1>
+
+    <?php foreach($contacts as $contact){ ?>
+        
+        <h2>
+            <a href="view_contact-message-single.php?contact_id=<?= $contact['contact_id'] ?>"> 
+            <?= $contact['contact_subject'] ?>
+        </a>
+        </h2>
+
+
+    <?php } ?>
+    
+    <div>
+        <a href="index.php"><button>Retour</button></a>
+    </div>
+
+<?php include 'include_footer.php'; ?>
+
+```
+
+
+
+
 > **Autre défi :** Qu'il y ait un formulaire d'inscription pour un premier utilisateur, c'est bien. Mais dans la logique, si un utilisateur est déjà enregistré, ce devrait être à lui seul que revient le pouvoir d'inscrire d'autres utilisateurs : le bouton d'inscription ne devrait donc plus apparaître...
 >
 > **Ultime défi :** concevez des interfaces esthétiques ! (ce qui revient à dire, habillez votre squelette avec du css !)
