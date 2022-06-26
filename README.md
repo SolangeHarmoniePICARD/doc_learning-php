@@ -1410,10 +1410,63 @@ $contacts = $query->fetchAll(PDO::FETCH_ASSOC);
 
 ```
 
+### Se déconnecter
+
+- C'est hyper facile ! Bon, déjà, quand on est connecté, on accède à `view_contact-form-messages.php`, donc c'est là qu'on va placer notre bouton de déconnexion. Il devrait ressembler à ça : 
+
+```html
+    <a href="handler_user-logout.php"><button>Se déconnecter</button></a>
+```
+
+- Évidemment, ça implique de créer le *handler* :
+
+```
+touch handler_user-logout.php
+```
+
+- C'est un fichier qui fait deux choses : la première, c'est de démarrer la session avec le fameux `session_start()`, qui donne accès à la variable superglobale de session, qui contient déjà plusieurs clés d'index, notamment `username`, `message`, etc. On vide tout ça en affectant la fonction `array()` sans paramètre à la superglobale `$_SESSION`, puis on détruit la session avec `session_destroy();` : 
+
+**handler_user-logout.php**
+```php
+// User logout
+session_start();
+$_SESSION = array();
+session_destroy();
+```
+
+- Ce pourrait être suffisant. Mais bon, niveau UX, un petit message de succès, c'est toujours mieux. Donc on ré-ouvre une session dans la foulée, on met un petit message de succès, et on termine par une redirection : 
+
+**handler_user-logout.php**
+```php
+// Logout Success Message
+session_start();
+$_SESSION['message'] = 'Vous êtes déconnecté !';
+header('Location: index.php');
+```
+
+- Le fichier `handler_user-logout.php` complet : 
+
+**handler_user-logout.php**
+```php
+<?php 
+
+// User logout
+session_start();
+$_SESSION = array();
+session_destroy();
+
+// Logout Success Message
+session_start();
+$_SESSION['message'] = 'Vous êtes déconnecté !';
+header('Location: index.php');
+
+// EOF
+```
 
 
 
-> **Autre défi :** Qu'il y ait un formulaire d'inscription pour un premier utilisateur, c'est bien. Mais dans la logique, si un utilisateur est déjà enregistré, ce devrait être à lui seul que revient le pouvoir d'inscrire d'autres utilisateurs : le bouton d'inscription ne devrait donc plus apparaître...
+
+> **Défi :** Qu'il y ait un formulaire d'inscription pour un premier utilisateur, c'est bien. Mais dans la logique, si un utilisateur est déjà enregistré, ce devrait être à lui seul que revient le pouvoir d'inscrire d'autres utilisateurs : le bouton d'inscription ne devrait donc plus apparaître...
 >
 > **Ultime défi :** concevez des interfaces esthétiques ! (ce qui revient à dire, habillez votre squelette avec du css !)
 
